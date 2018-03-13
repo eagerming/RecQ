@@ -11,6 +11,9 @@ import gensim.models.doc2vec as d2v
 from tool.qmath import cosine
 from gensim.models.doc2vec import TaggedDocument
 import pickle
+from tool import config
+
+
 class LabeledLineSentence(object):
     def __init__(self, filename):
         self.filename =filename
@@ -33,40 +36,45 @@ class PaperRec(IterativeRecommender):
     def __init__(self,conf,trainingSet=None,testSet=None,fold='[1]'):
         super(PaperRec, self).__init__(conf,trainingSet,testSet,fold)
 
-    # def readConfiguration(self):
-    #     super(PaperRec, self).readConfiguration()
+    def readConfiguration(self):
+        super(PaperRec, self).readConfiguration()
+        options = config.LineConfig(self.config['PaperRec'])
+        self.topK = int(options['-topK'])
+        self.beta = float(options['-beta'])
 
     def initModel(self):
         super(PaperRec, self).initModel()
-        self.sentences = LabeledLineSentence('../dataset/citeulike/rawtext.dat')
-        model = d2v.Doc2Vec(self.sentences,size=100, window=8, min_count=3, workers=4,iter=10)
-        self.W = np.random.rand(self.dao.trainingSize()[1], 100)
-        for item in self.dao.item:
-            iid = self.dao.item[item]
-            self.W[iid] = model.docvecs[item]
-        print 'Constructing similarity matrix...'
-        i = 0
-        self.topKSim = {}
-        self.topK = 10
-        for item in self.dao.item:
-            iSim = []
-            i += 1
-            if i % 200 == 0:
-                print i, '/', len(self.dao.item)
-            id1 = self.dao.item[item]
-            vec1 = self.W[id1]
-            for item2 in self.dao.item:
-                if item <> item2:
-                    id2 = self.dao.item[item2]
-                    vec2 = self.W[id2]
-                    sim = cosine(vec1, vec2)
-                    iSim.append((item2, sim))
-
-            self.topKSim[item] = sorted(iSim, key=lambda d: d[1], reverse=True)[:self.topK]
-
-        output = open('data.pkl', 'wb')
-        # Pickle dictionary using protocol 0.
-        pickle.dump(self.topKSim, output)
+        self.Z = np.random.rand(self.dao.trainingSize()[1], self.k)
+        # self.sentences = LabeledLineSentence('../dataset/citeulike/rawtext.dat')
+        # model = d2v.Doc2Vec(self.sentences,size=100, window=8, min_count=3, workers=4,iter=10)
+        # self.W = np.random.rand(self.dao.trainingSize()[1], 100)
+        # for item in self.dao.item:
+        #     iid = self.dao.item[item]
+        #     self.W[iid] = model.docvecs[item]
+        # print 'Constructing similarity matrix...'
+        # i = 0
+        # self.topKSim = {}        #
+        # for item in self.dao.item:
+        #     iSim = []
+        #     i += 1
+        #     if i % 200 == 0:
+        #         print i, '/', len(self.dao.item)
+        #     id1 = self.dao.item[item]
+        #     vec1 = self.W[id1]
+        #     for item2 in self.dao.item:
+        #         if item <> item2:
+        #             id2 = self.dao.item[item2]
+        #             vec2 = self.W[id2]
+        #             sim = cosine(vec1, vec2)
+        #             iSim.append((item2, sim))
+        #
+        #     self.topKSim[item] = sorted(iSim, key=lambda d: d[1], reverse=True)[:self.topK]
+        #
+        # output = open('similarity.pkl', 'wb')
+        # # Pickle dictionary using protocol 0.
+        # pickle.dump(self.topKSim, output)
+        f = open('similarity.pkl','rb')
+        self.topKSim = pickle.load(f)
 
 
 
@@ -109,16 +117,21 @@ class PaperRec(IterativeRecommender):
                     self.loss += -log(s)
 
             for item in self.topKSim:
+                if not self.dao.item.has_key(item):
+                        continue
                 id1 = self.dao.item[item]
                 for similarItem in self.topKSim[item]:
+                    if not self.dao.item.has_key(similarItem[0]):
+                        continue
                     id2 = self.dao.item[similarItem[0]]
                     p = self.Q[id1]
-                    q = self.Q[id2]
-                    error = similarItem[1] -p.dot(q)
-                    self.Q[id1]+=self.lRate*error*q
-                    self.Q[id2]+=self.lRate*error*p
-                    self.loss+=error**2
-            self.loss += self.regU * (self.P * self.P).sum() + self.regI * (self.Q * self.Q).sum()
+                    z = self.Z[id2]
+                    error = similarItem[1] -p.dot(z)
+                    self.Q[id1]+=self.beta*self.lRate*error*z
+                    self.Z[id2]+=self.beta*self.lRate*error*p
+                    self.Z[id2]-=self.beta*self.lRate*self.regI*z
+                    self.loss+=self.beta*error**2
+            self.loss += self.regU * (self.P * self.P).sum() + self.regI * (self.Q * self.Q).sum()+self.regI * (self.Z * self.Z).sum()
             iteration += 1
             if self.isConverged(iteration):
                 break
