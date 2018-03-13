@@ -70,9 +70,12 @@ class PaperRec(IterativeRecommender):
         #
         #     self.topKSim[item] = sorted(iSim, key=lambda d: d[1], reverse=True)[:self.topK]
         #
+        ## save similarity to disk
         # output = open('similarity.pkl', 'wb')
         # # Pickle dictionary using protocol 0.
         # pickle.dump(self.topKSim, output)
+
+        #load similarity from disk
         f = open('similarity.pkl','rb')
         self.topKSim = pickle.load(f)
 
