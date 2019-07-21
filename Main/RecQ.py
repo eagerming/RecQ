@@ -40,14 +40,14 @@ class RecQ(object):
                 #self.trainingData,self.testData = DataSplit.crossValidation(self.trainingData,int(self.evaluation['-cv']))
 
         else:
-            print 'Evaluation is not well configured!'
+            print('Evaluation is not well configured!')
             exit(-1)
 
         if config.contains('social'):
             self.socialConfig = LineConfig(self.config['social.setup'])
             self.relation = FileIO.loadRelationship(config,self.config['social'])
 
-        print 'preprocessing...'
+        print('preprocessing...')
 
 
 
@@ -66,7 +66,7 @@ class RecQ(object):
             k = int(self.evaluation['-cv'])
             if k <= 1 or k > 10:
                 k = 3
-            mkl.set_num_threads(max(1,mkl.get_max_threads()/k))
+            mkl.set_num_threads(max(1,mkl.get_max_threads()//k))
             #create the manager used to communication in multiprocess
             manager = Manager()
             m = manager.dict()
@@ -113,7 +113,7 @@ class RecQ(object):
             outDir = LineConfig(self.config['output.setup'])['-dir']
             fileName = self.config['recommender'] +'@'+currentTime+'-'+str(k)+'-fold-cv' + '.txt'
             FileIO.writeFile(outDir,fileName,res)
-            print 'The result of %d-fold cross validation:\n%s' %(k,''.join(res))
+            print('The result of %d-fold cross validation:\n%s' %(k,''.join(res)))
 
 
         else:

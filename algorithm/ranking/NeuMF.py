@@ -24,7 +24,7 @@ class NeuMF(DeepRecommender):
             #According to the paper, we sampled four negative instances per positive instance
             for instance in range(4):
                 item_j = randint(0, self.num_items - 1)
-                while self.data.trainSet_u[user].has_key(self.data.id2item[item_j]):
+                while self.data.id2item[item_j] in self.data.trainSet_u[user]:
                     item_j = randint(0, self.num_items - 1)
                 user_idx.append(self.data.user[user])
                 item_idx.append(item_j)
@@ -108,42 +108,42 @@ class NeuMF(DeepRecommender):
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
-        print 'pretraining... (GMF)'
+        print('pretraining... (GMF)')
         for epoch in range(self.maxIter):
             user_idx, item_idx, r = self.next_batch()
 
             _, loss,y_mf = self.sess.run([self.mf_optimizer, self.mf_loss,self.y_mf],
                                feed_dict={self.u_idx: user_idx, self.i_idx: item_idx, self.r: r})
-            print 'iteration:', epoch, 'loss:', loss
+            print('iteration:', epoch, 'loss:', loss)
 
-        print 'pretraining... (MLP)'
+        print('pretraining... (MLP)')
         for epoch in range(self.maxIter/2):
             user_idx, item_idx, r = self.next_batch()
             _, loss, y_mlp = self.sess.run([self.mlp_optimizer, self.mlp_loss, self.y_mlp],
                                           feed_dict={self.u_idx: user_idx, self.i_idx: item_idx, self.r: r})
-            print 'iteration:', epoch, 'loss:', loss
+            print('iteration:', epoch, 'loss:', loss)
 
-        print 'training... (NeuMF)'
+        print('training... (NeuMF)')
         for epoch in range(self.maxIter/10):
             user_idx, item_idx, r = self.next_batch()
             _, loss, y_neu = self.sess.run([self.neu_optimizer, self.neu_loss, self.y_neu],
                                           feed_dict={self.u_idx: user_idx, self.i_idx: item_idx, self.r: r})
-            print 'iteration:', epoch, 'loss:', loss
+            print('iteration:', epoch, 'loss:', loss)
 
 
     def predict_mlp(self,uid):
         user_idx = [uid]*self.num_items
-        y_mlp = self.sess.run([self.y_mlp],feed_dict={self.u_idx: user_idx, self.i_idx: range(self.num_items)})
+        y_mlp = self.sess.run([self.y_mlp],feed_dict={self.u_idx: user_idx, self.i_idx: list(range(self.num_items))})
         return y_mlp[0]
 
     def predict_mf(self,uid):
         user_idx = [uid]*self.num_items
-        y_mf = self.sess.run([self.y_mf],feed_dict={self.u_idx: user_idx, self.i_idx: range(self.num_items)})
+        y_mf = self.sess.run([self.y_mf],feed_dict={self.u_idx: user_idx, self.i_idx: list(range(self.num_items))})
         return y_mf[0]
 
     def predict_neu(self,uid):
         user_idx = [uid]*self.num_items
-        y_neu = self.sess.run([self.y_neu],feed_dict={self.u_idx: user_idx, self.i_idx: range(self.num_items)})
+        y_neu = self.sess.run([self.y_neu],feed_dict={self.u_idx: user_idx, self.i_idx: list(range(self.num_items))})
         return y_neu[0]
 
     def predictForRanking(self, u):

@@ -27,10 +27,10 @@ class IterativeRecommender(Recommender):
 
     def printAlgorConfig(self):
         super(IterativeRecommender, self).printAlgorConfig()
-        print 'Reduced Dimension:',self.k
-        print 'Maximum Iteration:',self.maxIter
-        print 'Regularization parameter: regU %.3f, regI %.3f, regB %.3f' %(self.regU,self.regI,self.regB)
-        print '='*80
+        print('Reduced Dimension:',self.k)
+        print('Maximum Iteration:',self.maxIter)
+        print('Regularization parameter: regU %.3f, regI %.3f, regB %.3f' %(self.regU,self.regI,self.regB))
+        print('='*80)
 
     def initModel(self):
         self.P = np.random.rand(len(self.data.user), self.k)/3 # latent user matrix
@@ -91,17 +91,17 @@ class IterativeRecommender(Recommender):
     def isConverged(self,iter):
         from math import isnan
         if isnan(self.loss):
-            print 'Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!'
+            print('Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!')
             exit(-1)
         deltaLoss = (self.lastLoss-self.loss)
         if self.ranking.isMainOn():
-            print '%s %s iteration %d: loss = %.4f, delta_loss = %.5f learning_Rate = %.5f' \
-                  %(self.algorName,self.foldInfo,iter,self.loss,deltaLoss,self.lRate)
+            print('%s %s iteration %d: loss = %.4f, delta_loss = %.5f learning_Rate = %.5f' \
+                  %(self.algorName,self.foldInfo,iter,self.loss,deltaLoss,self.lRate))
             measure = self.ranking_performance()
         else:
             measure = self.rating_performance()
-            print '%s %s iteration %d: loss = %.4f, delta_loss = %.5f learning_Rate = %.5f %5s %5s' \
-                  % (self.algorName, self.foldInfo, iter, self.loss, deltaLoss, self.lRate, measure[0].strip()[:11], measure[1].strip()[:12])
+            print('%s %s iteration %d: loss = %.4f, delta_loss = %.5f learning_Rate = %.5f %5s %5s' \
+                  % (self.algorName, self.foldInfo, iter, self.loss, deltaLoss, self.lRate, measure[0].strip()[:11], measure[1].strip()[:12]))
         #check if converged
         cond = abs(deltaLoss) < 1e-3
         converged = cond
@@ -168,7 +168,7 @@ class IterativeRecommender(Recommender):
 
                 if recommendations[r] < itemSet[item]:
                     while True:
-                        mid = (l + r) / 2
+                        mid = (l + r) // 2
                         if recommendations[mid] >= itemSet[item]:
                             l = mid + 1
                         elif recommendations[mid] < itemSet[item]:
@@ -184,13 +184,13 @@ class IterativeRecommender(Recommender):
                 if ind < N - 1:
                     recommendations[ind + 1] = itemSet[item]
                     resNames[ind + 1] = item
-            recList[user] = zip(resNames, recommendations)
+            recList[user] = list(zip(resNames, recommendations))
         measure = Measure.rankingMeasure(testSample, recList, [10,20])
-        print '-'*80
-        print 'Ranking Performance '+self.foldInfo+' (Top-10 On 300 sampled users)'
+        print('-'*80)
+        print('Ranking Performance '+self.foldInfo+' (Top-10 On 300 sampled users)')
         for m in measure[1:]:
-            print m.strip()
-        print '-'*80
+            print(m.strip())
+        print('-'*80)
         #self.record.append(measure[3].strip()+' '+measure[4])
         return measure
 

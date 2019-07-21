@@ -46,9 +46,9 @@ class SRGAN(SocialRecommender,DeepRecommender):
                 self.positive[user].append(item)
                 self.pItems[item].append(user)
 
-        print 'Kind Note: This method will probably take much time.'
+        print('Kind Note: This method will probably take much time.')
         # build U-F-NET
-        print 'Building weighted user-friend network...'
+        print('Building weighted user-friend network...')
         # filter isolated nodes and low ratings
         # Definition of Meta-Path
         p1 = 'UIU'
@@ -69,7 +69,7 @@ class SRGAN(SocialRecommender,DeepRecommender):
             s1 = set(self.social.followees[u])
             for v in self.social.followees[u]:
                 if v in self.social.followees:  # make sure that v has out links
-                    if u <> v:
+                    if u != v:
                         s2 = set(self.social.followees[v])
                         weight = len(s1.intersection(s2))
                         self.UFNet[u] += [v] * (weight + 1)
@@ -78,13 +78,13 @@ class SRGAN(SocialRecommender,DeepRecommender):
         for u in self.social.followers:
             s1 = set(self.social.followers[u])
             for v in self.social.followers[u]:
-                if self.social.followers.has_key(v):  # make sure that v has out links
-                    if u <> v:
+                if v in self.social.followers:  # make sure that v has out links
+                    if u != v:
                         s2 = set(self.social.followers[v])
                         weight = len(s1.intersection(s2))
                         self.UTNet[u] += [v] * (weight + 1)
 
-        print 'Generating random meta-path random walks... (Positive)'
+        print('Generating random meta-path random walks... (Positive)')
         self.pWalks = []
         # self.usercovered = {}
 
@@ -118,21 +118,21 @@ class SRGAN(SocialRecommender,DeepRecommender):
                                         nextNode = choice(self.pItems[lastNode])
                                     elif lastType == 'F':
                                         nextNode = choice(self.UFNet[lastNode])
-                                        while not self.data.user.has_key(nextNode):
+                                        while nextNode not in self.data.user:
                                             nextNode = choice(self.UFNet[lastNode])
                                     elif lastType == 'T':
                                         nextNode = choice(self.UTNet[lastNode])
-                                        while not self.data.user.has_key(nextNode):
+                                        while nextNode not in self.data.user:
                                             nextNode = choice(self.UTNet[lastNode])
 
                                 if tp == 'F':
                                     nextNode = choice(self.UFNet[lastNode])
-                                    while not self.data.user.has_key(nextNode):
+                                    while nextNode not in self.data.user:
                                         nextNode = choice(self.UFNet[lastNode])
 
                                 if tp == 'T':
                                     nextNode = choice(self.UFNet[lastNode])
-                                    while not self.data.user.has_key(nextNode):
+                                    while nextNode not in self.data.user:
                                         nextNode = choice(self.UFNet[lastNode])
 
                                 path.append(tp + nextNode)
@@ -178,21 +178,21 @@ class SRGAN(SocialRecommender,DeepRecommender):
                                         nextNode = choice(self.nItems[lastNode])
                                     elif lastType == 'F':
                                         nextNode = choice(self.UFNet[lastNode])
-                                        while not self.data.user.has_key(nextNode):
+                                        while nextNode not in self.data.user:
                                             nextNode = choice(self.UFNet[lastNode])
                                     elif lastType == 'T':
                                         nextNode = choice(self.UTNet[lastNode])
-                                        while not self.data.user.has_key(nextNode):
+                                        while nextNode not in self.data.user:
                                             nextNode = choice(self.UTNet[lastNode])
 
                                 if tp == 'F':
                                     nextNode = choice(self.UFNet[lastNode])
-                                    while not self.data.user.has_key(nextNode):
+                                    while nextNode not in self.data.user:
                                         nextNode = choice(self.UFNet[lastNode])
 
                                 if tp == 'T':
                                     nextNode = choice(self.UFNet[lastNode])
-                                    while not self.data.user.has_key(nextNode):
+                                    while nextNode not in self.data.user:
                                         nextNode = choice(self.UFNet[lastNode])
 
                                 path.append(tp + nextNode)
@@ -207,12 +207,12 @@ class SRGAN(SocialRecommender,DeepRecommender):
                         self.nWalks.append(path)
 
         shuffle(self.pWalks)
-        print 'pwalks:', len(self.pWalks)
-        print 'nwalks:', len(self.nWalks)
+        print('pwalks:', len(self.pWalks))
+        print('nwalks:', len(self.nWalks))
 
     def computeSimilarity(self):
         # Training get top-k friends
-        print 'Generating user embedding...'
+        print('Generating user embedding...')
         self.pTopKSim = {}
         self.nTopKSim = {}
         self.pSimilarity = defaultdict(dict)
@@ -231,18 +231,18 @@ class SRGAN(SocialRecommender,DeepRecommender):
                 self.G[uid] = neg_model.wv['U' + user]
             except KeyError:
                 continue
-        print 'User embedding generated.'
+        print('User embedding generated.')
 
-        print 'Constructing similarity matrix...'
+        print('Constructing similarity matrix...')
         i = 0
         for user1 in self.positive:
             uSim = []
             i += 1
             if i % 200 == 0:
-                print i, '/', len(self.positive)
+                print(i, '/', len(self.positive))
             vec1 = self.W[self.data.user[user1]]
             for user2 in self.positive:
-                if user1 <> user2:
+                if user1 != user2:
                     vec2 = self.W[self.data.user[user2]]
                     sim = cosine(vec1, vec2)
                     uSim.append((user2, sim))
@@ -256,10 +256,10 @@ class SRGAN(SocialRecommender,DeepRecommender):
             uSim = []
             i += 1
             if i % 200 == 0:
-                print i, '/', len(self.negative)
+                print(i, '/', len(self.negative))
             vec1 = self.G[self.data.user[user1]]
             for user2 in self.negative:
-                if user1 <> user2:
+                if user1 != user2:
                     vec2 = self.G[self.data.user[user2]]
                     sim = cosine(vec1, vec2)
                     uSim.append((user2, sim))
@@ -276,7 +276,7 @@ class SRGAN(SocialRecommender,DeepRecommender):
 
         for user in self.pTopKSim:
             for friend in self.seededFriends[user]:
-                self.firend_item_set[user]+=self.data.trainSet_u[friend].keys()
+                self.firend_item_set[user]+=list(self.data.trainSet_u[friend].keys())
 
     def sampling(self,vec):
 
@@ -411,7 +411,7 @@ class SRGAN(SocialRecommender,DeepRecommender):
             batch_id=self.train_size
 
         u_idx,i_idx,j_idx = [],[],[]
-        item_list = self.data.item.keys()
+        item_list = list(self.data.item.keys())
         for i,user in enumerate(users):
 
             i_idx.append(self.data.item[items[i]])
@@ -425,7 +425,7 @@ class SRGAN(SocialRecommender,DeepRecommender):
         return batch_id,u_idx,i_idx,j_idx
 
     def next_batch_g(self,batch_id):
-        userList = self.data.user.keys()
+        userList = list(self.data.user.keys())
         if batch_id+self.batch_size<=self.num_users:
             profiles = np.zeros((self.batch_size, self.num_users))
             for i,user in enumerate(userList[batch_id:self.batch_size+batch_id]):
@@ -484,16 +484,16 @@ class SRGAN(SocialRecommender,DeepRecommender):
         f = open(self.foldInfo+'SRGAN.txt','w')
         res = []
 
-        print 'pretraining for generator...'
+        print('pretraining for generator...')
         for i in range(30):
             batch_id=0
             while batch_id<self.num_users:
                 batch_id,profiles = self.next_batch_g(batch_id)
                 _,loss = self.sess.run([self.g_pretrain,self.reconstruction],feed_dict={self.X:profiles})
-                print 'pretraining:', i + 1, 'batch_id',batch_id,'generator loss:', loss
+                print('pretraining:', i + 1, 'batch_id',batch_id,'generator loss:', loss)
 
 
-        print 'Training GAN...'
+        print('Training GAN...')
 
         for i in range(50):
             batch_id = 0
@@ -515,7 +515,7 @@ class SRGAN(SocialRecommender,DeepRecommender):
                                         feed_dict={self.u: user_idx,self.neg:j_idx,
                                                    self.pos: i_idx,self.X:profiles,self.u_i_matrix:self.matrix})
 
-                print 'training:', i + 1, 'batch_id', batch_id, 'discriminator loss:', loss
+                print('training:', i + 1, 'batch_id', batch_id, 'discriminator loss:', loss)
 
             results = self.ranking_performance()
             res+=results

@@ -4,3 +4,4 @@ dataset/
 visual/visualization
 *.pyc
 
+*.bak

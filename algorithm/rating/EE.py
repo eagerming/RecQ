@@ -14,8 +14,8 @@ class EE(IterativeRecommender):
 
     def initModel(self):
         super(EE, self).initModel()
-        self.Bu = np.random.rand(self.data.trainingSize()[0])/10  # bias value of user
-        self.Bi = np.random.rand(self.data.trainingSize()[1])/10  # bias value of item
+        self.Bu = np.random.rand(self.data.trainingSize()[0])//10  # bias value of user
+        self.Bi = np.random.rand(self.data.trainingSize()[1])//10  # bias value of item
         # self.X = np.random.rand(self.data.trainingSize()[0], self.Dim)/10
         # self.Y = np.random.rand(self.data.trainingSize()[1], self.Dim)/10
 
@@ -94,8 +94,8 @@ class EE(IterativeRecommender):
                 sess.run(train_U, feed_dict={self.r: rating, self.u_idx: user_idx, self.v_idx: item_idx,global_mean:g_mean})
                 sess.run(train_V, feed_dict={self.r: rating, self.u_idx: user_idx, self.v_idx: item_idx, global_mean: g_mean})
 
-                print 'iteration:', step, 'loss:', sess.run(self.total_loss,
-                                                            feed_dict={self.r: rating, self.u_idx: user_idx, self.v_idx: item_idx,global_mean:g_mean})
+                print('iteration:', step, 'loss:', sess.run(self.total_loss,
+                                                            feed_dict={self.r: rating, self.u_idx: user_idx, self.v_idx: item_idx,global_mean:g_mean}))
 
 
             self.P = sess.run(self.U)

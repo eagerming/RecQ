@@ -1,4 +1,4 @@
-from chart import Chart
+from .chart import Chart
 from tool.config import Config
 from data.rating import RatingDAO
 from data.social import SocialDAO
@@ -11,7 +11,7 @@ class Display(object):
     def __init__(self,conf):
         self.conf = conf
         if not conf.contains('ratings') and not conf.contains('social'):
-            print 'The config file is not in the correct format!'
+            print('The config file is not in the correct format!')
             exit(-1)
         if conf.contains('ratings'):
             ratingData =  FileIO.loadDataSet(conf,conf['ratings'])
@@ -22,7 +22,7 @@ class Display(object):
 
 
     def draw(self):
-        print 'draw chart...'
+        print('draw chart...')
         #rating
         if self.conf.contains('ratings'):
             y = [triple[2] for triple in self.dao.trainingData]
@@ -55,7 +55,7 @@ class Display(object):
         html ="<html><head><title>Data Analysis</title>\n" \
               "<link rel='stylesheet' type='text/css' href='reportStyle.css'/></head>\n" \
               "<body><div class='reportTitle'><div class='in'>Data Analysis</div></div>\n" \
-              "<div class='main'><div class='area1'>\n" \
+              "<div class='Main'><div class='area1'>\n" \
               "<div class='title'><h3>Data Files</h3></div><div class='text'>"
         if self.conf.contains('ratings'):
             html+="<b>Rating Data</b>: {rating}".format(rating = abspath(self.conf['ratings']))
@@ -86,6 +86,6 @@ class Display(object):
 
         html+="</div></body></html>"
         FileIO.writeFile('../visual/visualization/','analysis.html',html)
-        print 'The report has been output to',abspath('../visual/visualization/analysis.html')
+        print('The report has been output to',abspath('../visual/visualization/analysis.html'))
         webbrowser.open(abspath('../visual/visualization/analysis.html'), new=0, autoraise=True)
 

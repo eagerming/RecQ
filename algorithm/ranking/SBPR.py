@@ -13,7 +13,7 @@ class SBPR(SocialRecommender):
 
     def buildModel(self):
         self.b = np.random.random(self.data.trainingSize()[1])
-        print 'Preparing item sets...'
+        print('Preparing item sets...')
         self.PositiveSet = defaultdict(dict)
         self.FPSet = defaultdict(dict)
         # self.NegativeSet = defaultdict(list)
@@ -24,24 +24,24 @@ class SBPR(SocialRecommender):
                     self.PositiveSet[user][item] = 1
                     # else:
                     #     self.NegativeSet[user].append(item)
-            if self.social.user.has_key(user):
+            if user in self.social.user:
                 for friend in self.social.getFollowees(user):
-                    if self.data.user.has_key(friend):
+                    if friend in self.data.user:
                         for item in self.data.trainSet_u[friend]:
-                            if not self.PositiveSet[user].has_key(item):
-                                if not self.FPSet[user].has_key(item):
+                            if item not in self.PositiveSet[user]:
+                                if item not in self.FPSet[user]:
                                     self.FPSet[user][item] = 1
                                 else:
                                     self.FPSet[user][item] += 1
         Suk=1
-        print 'Training...'
+        print('Training...')
         iteration = 0
         while iteration < self.maxIter:
             self.loss = 0
-            itemList = self.data.item.keys()
+            itemList = list(self.data.item.keys())
             for user in self.PositiveSet:
                 u = self.data.user[user]
-                kItems = self.FPSet[user].keys()
+                kItems = list(self.FPSet[user].keys())
                 for item in self.PositiveSet[user]:
                     i = self.data.item[item]
                     for n in range(3): #negative sampling for 3 times
@@ -59,7 +59,7 @@ class SBPR(SocialRecommender):
                             #     item_j = choice(self.NegativeSet[user])
                             # else:
                             item_j = choice(itemList)
-                            while (self.PositiveSet[user].has_key(item_j) or self.FPSet.has_key(item_j)):
+                            while (item_j in self.PositiveSet[user] or item_j in self.FPSet):
                                 item_j = choice(itemList)
                             j = self.data.item[item_j]
                             s = sigmoid(self.P[u].dot(self.Q[k])+self.b[k] - self.P[u].dot(self.Q[j])-self.b[j])
@@ -78,7 +78,7 @@ class SBPR(SocialRecommender):
                                          - log(sigmoid(self.P[u].dot(self.Q[k])+self.b[k] - self.P[u].dot(self.Q[j])-self.b[j]))
                         else:
                             item_j = choice(itemList)
-                            while (self.PositiveSet[user].has_key(item_j)):
+                            while (item_j in self.PositiveSet[user]):
                                 item_j = choice(itemList)
                             j = self.data.item[item_j]
                             s = sigmoid(self.P[u].dot(self.Q[i])+self.b[i] - self.P[u].dot(self.Q[j])-self.b[j])

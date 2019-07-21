@@ -5,7 +5,7 @@ from random import randint,choice
 try:
     import tensorflow as tf
 except ImportError:
-    print 'This method can only run on tensorflow!'
+    print('This method can only run on tensorflow!')
     exit(-1)
 from tensorflow import set_random_seed
 set_random_seed(2)
@@ -156,7 +156,7 @@ class IRGAN(DeepRecommender):
             # According to the paper, we sampled four negative instances per positive instance
             for instance in range(4):
                 item_j = randint(0, self.num_items - 1)
-                while self.data.trainSet_u[user].has_key(self.data.id2item[item_j]):
+                while self.data.id2item[item_j] in self.data.trainSet_u[user]:
                     item_j = randint(0, self.num_items - 1)
                 user_idx.append(self.data.user[user])
                 item_idx.append(item_j)
@@ -219,7 +219,7 @@ class IRGAN(DeepRecommender):
 
         for epoch in range(self.maxIter):
 
-            print 'Update discriminator...'
+            print('Update discriminator...')
             for d_epoch in range(20):
                 if d_epoch % 5 == 0:
                     data,train_size = self.get_data(self.generator)
@@ -238,10 +238,10 @@ class IRGAN(DeepRecommender):
                                  feed_dict={self.discriminator.u: input_user, self.discriminator.i: input_item,
                                             self.discriminator.label: input_label})
 
-                print 'epoch:',epoch+1,'d_epoch:', d_epoch+1
+                print('epoch:',epoch+1,'d_epoch:', d_epoch+1)
 
             # Train G
-            print 'Update generator...'
+            print('Update generator...')
             for g_epoch in range(50):
                 for user in self.data.trainSet_u:
                     sample_lambda = 0.2
@@ -273,7 +273,7 @@ class IRGAN(DeepRecommender):
                                       {self.generator.u: u, self.generator.i: sample,
                                        self.generator.reward: reward})
 
-                print 'epoch:', epoch+1, 'g_epoch:', g_epoch+1
+                print('epoch:', epoch+1, 'g_epoch:', g_epoch+1)
 
             self.ranking_performance()
 
