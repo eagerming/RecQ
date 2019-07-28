@@ -12,8 +12,12 @@ class BPR(IterativeRecommender):
     # BPR：Bayesian Personalized Ranking from Implicit Feedback
     # Steffen Rendle,Christoph Freudenthaler,Zeno Gantner and Lars Schmidt-Thieme
 
-    def __init__(self,conf,trainingSet=None,testSet=None,fold='[1]'):
-        super(BPR, self).__init__(conf,trainingSet,testSet,fold)
+    # def __init__(self,conf,trainingSet=None,testSet=None,accountDAO=None,fold='[1]'):
+    #     super(BPR, self).__init__(conf,trainingSet,testSet,fold)
+    #     self.accountDAO = accountDAO
+
+    def __init__(self, conf, training_data, test_user_item, fold='[1]'):
+        super(BPR, self).__init__(conf, training_data, test_user_item, fold)
 
     # def readConfiguration(self):
     #     super(BPR, self).readConfiguration()

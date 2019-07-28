@@ -1,28 +1,42 @@
 import os.path
 class Config(object):
-    def __init__(self,fileName):
+    def __init__(self, fileName):
         self.config = {}
         self.readConfiguration(fileName)
 
     def __getitem__(self, item):
         if not self.contains(item):
-            print('parameter '+item+' is invalid!')
-            exit(-1)
+            raise Exception('parameter ' + item + ' is invalid!')
+
         return self.config[item]
+
+    def __setitem__(self, key, value):
+        self.config[key] = value
+
+    def update(self, another_config):
+        self.config.update(another_config.config)
+
+    def update_inferior(self, another_config):
+        new_config = another_config.config.copy()
+        new_config.update(self.config)
+        self.config = new_config
+
+    def __repr__(self):
+        return self.config.__str__()
 
     def getOptions(self,item):
         if not self.contains(item):
-            print('parameter '+item+' is invalid!')
-            exit(-1)
+            raise Exception('parameter '+item+' is invalid!')
         return self.config[item]
 
     def contains(self,key):
         return key in self.config
 
     def readConfiguration(self,fileName):
-        path = '../config/'+fileName
+        # path = '../config/'+fileName
+        path = fileName
         if not os.path.exists(path):
-            print('config file is not found!')
+            print('config file {} is not found!'.format(path))
             raise IOError
         with open(path) as f:
             for ind,line in enumerate(f):
@@ -37,6 +51,7 @@ class Config(object):
 
 class LineConfig(object):
     def __init__(self,content):
+        self.content = content
         self.line = content.strip().split(' ')
         self.options = {}
         self.mainOption = False
@@ -59,6 +74,8 @@ class LineConfig(object):
                 except IndexError:
                     self.options[item] = 1
 
+    def __repr__(self):
+        return self.content
 
     def __getitem__(self, item):
         if not self.contains(item):

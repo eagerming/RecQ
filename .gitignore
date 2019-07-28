@@ -5,3 +5,4 @@ visual/visualization
 *.pyc
 
 *.bak
+account_data/

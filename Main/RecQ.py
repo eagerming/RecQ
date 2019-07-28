@@ -1,20 +1,26 @@
-import sys
-from re import split
-from tool.config import Config,LineConfig
+
+from algorithm.ranking.ABPR import ABPR
+from tool.config import Config, LineConfig
 from tool.file import FileIO
 from evaluation.dataSplit import *
-from multiprocessing import Process,Manager
+from multiprocessing import Process, Manager
 from tool.file import FileIO
-from time import strftime,localtime,time
+from time import strftime, localtime, time
 import mkl
+
+
 class RecQ(object):
-    def __init__(self,config):
+    def __init__(self, config, account_DAO=None):
         self.trainingData = []  # training data
         self.testData = []  # testData
         self.relation = []
         self.measure = []
-        self.config =config
+        self.config = config
         self.ratingConfig = LineConfig(config['ratings.setup'])
+
+        self.accountDAO = account_DAO
+        # self.currentTime = strftime("%Y-%m-%d %H-%M-%S", localtime(time()))
+
         if self.config.contains('evaluation.setup'):
             self.evaluation = LineConfig(config['evaluation.setup'])
             binarized = False
@@ -23,21 +29,28 @@ class RecQ(object):
                 binarized = True
                 bottom = float(self.evaluation['-b'])
             if self.evaluation.contains('-testSet'):
-                #specify testSet
+                # specify testSet
 
-                self.trainingData = FileIO.loadDataSet(config, config['ratings'],binarized=binarized,threshold=bottom)
-                self.testData = FileIO.loadDataSet(config, self.evaluation['-testSet'], bTest=True,binarized=binarized,threshold=bottom)
+                self.trainingData = FileIO.loadDataSet(config, config['ratings'], binarized=binarized, threshold=bottom)
+                self.testData = FileIO.loadDataSet(config, self.evaluation['-testSet'], bTest=True, binarized=binarized,
+                                                   threshold=bottom)
 
             elif self.evaluation.contains('-ap'):
-                #auto partition
+                # auto partition
 
-                self.trainingData = FileIO.loadDataSet(config,config['ratings'],binarized=binarized,threshold=bottom)
-                self.trainingData,self.testData = DataSplit.\
-                    dataSplit(self.trainingData,test_ratio=float(self.evaluation['-ap']),binarized=binarized)
+                self.trainingData = FileIO.loadDataSet(config, config['ratings'], binarized=binarized, threshold=bottom)
+                self.trainingData, self.testData = DataSplit. \
+                    dataSplit(self.trainingData, test_ratio=float(self.evaluation['-ap']), binarized=binarized)
             elif self.evaluation.contains('-cv'):
-                #cross validation
-                self.trainingData = FileIO.loadDataSet(config, config['ratings'],binarized=binarized,threshold=bottom)
-                #self.trainingData,self.testData = DataSplit.crossValidation(self.trainingData,int(self.evaluation['-cv']))
+                # cross validation
+                self.trainingData = FileIO.loadDataSet(config, config['ratings'], binarized=binarized, threshold=bottom)
+                # self.trainingData,self.testData = DataSplit.crossValidation(self.trainingData,int(self.evaluation['-cv']))
+
+            elif self.evaluation.contains('--account'):
+                self.training_user_item = account_DAO.training_user_item
+                self.training_account_item = account_DAO.training_account_item
+                self.relation = account_DAO.relation
+                self.test_user_item = account_DAO.test_user_item
 
         else:
             print('Evaluation is not well configured!')
@@ -45,29 +58,24 @@ class RecQ(object):
 
         if config.contains('social'):
             self.socialConfig = LineConfig(self.config['social.setup'])
-            self.relation = FileIO.loadRelationship(config,self.config['social'])
+            self.relation = FileIO.loadRelationship(config, self.config['social'])
 
         print('preprocessing...')
 
-
-
-
-
-
     def execute(self):
-        #import the algorithm module
+        # import the algorithm module
         try:
             importStr = 'from algorithm.rating.' + self.config['recommender'] + ' import ' + self.config['recommender']
-            exec (importStr)
+            exec(importStr)
         except ImportError:
             importStr = 'from algorithm.ranking.' + self.config['recommender'] + ' import ' + self.config['recommender']
-            exec (importStr)
+            exec(importStr)
         if self.evaluation.contains('-cv'):
             k = int(self.evaluation['-cv'])
             if k <= 1 or k > 10:
                 k = 3
-            mkl.set_num_threads(max(1,mkl.get_max_threads()//k))
-            #create the manager used to communication in multiprocess
+            mkl.set_num_threads(max(1, mkl.get_max_threads() // k))
+            # create the manager used to communication in multiprocess
             manager = Manager()
             m = manager.dict()
             i = 1
@@ -77,27 +85,27 @@ class RecQ(object):
             if self.evaluation.contains('-b'):
                 binarized = True
 
-            for train,test in DataSplit.crossValidation(self.trainingData,k,binarized=binarized):
-                fold = '['+str(i)+']'
+            for train, test in DataSplit.crossValidation(self.trainingData, k, binarized=binarized):
+                fold = '[' + str(i) + ']'
                 if self.config.contains('social'):
                     recommender = self.config['recommender'] + "(self.config,train,test,self.relation,fold)"
                 else:
-                    recommender = self.config['recommender']+ "(self.config,train,test,fold)"
-               #create the process
-                p = Process(target=run,args=(m,eval(recommender),i))
+                    recommender = self.config['recommender'] + "(self.config,train,test,fold)"
+                # create the process
+                p = Process(target=run, args=(m, eval(recommender), i))
                 tasks.append(p)
-                i+=1
-            #start the processes
+                i += 1
+            # start the processes
             for p in tasks:
                 p.start()
                 if not self.evaluation.contains('-p'):
                     p.join()
-            #wait until all processes are completed
+            # wait until all processes are completed
             if self.evaluation.contains('-p'):
                 for p in tasks:
                     p.join()
-            #compute the mean error of k-fold cross validation
-            self.measure = [dict(m)[i] for i in range(1,k+1)]
+            # compute the mean error of k-fold cross validation
+            self.measure = [dict(m)[i] for i in range(1, k + 1)]
             res = []
             for i in range(len(self.measure[0])):
                 if self.measure[0][i][:3] == 'Top':
@@ -108,21 +116,40 @@ class RecQ(object):
                 for j in range(k):
                     total += float(self.measure[j][i].split(':')[1])
                 res.append(measure + ':' + str(total / k) + '\n')
-            #output result
+            # output result
             currentTime = strftime("%Y-%m-%d %H-%M-%S", localtime(time()))
             outDir = LineConfig(self.config['output.setup'])['-dir']
-            fileName = self.config['recommender'] +'@'+currentTime+'-'+str(k)+'-fold-cv' + '.txt'
-            FileIO.writeFile(outDir,fileName,res)
-            print('The result of %d-fold cross validation:\n%s' %(k,''.join(res)))
+            fileName = self.config['recommender'] + '@' + currentTime + '-' + str(k) + '-fold-cv' + '.txt'
+            FileIO.writeFile(outDir, fileName, res)
+            print('The result of %d-fold cross validation:\n%s' % (k, ''.join(res)))
 
+        elif self.evaluation.contains('--account'):
+            if self.evaluation.contains('-ul') and eval(self.evaluation['-ul']) > 0:
+                training_data = 'self.training_user_item'
+                social_info = 'relation=self.relation'
+            else:
+                training_data = 'self.training_account_item'
+                social_info = ''
+
+
+            recommender = self.config['recommender'] + '(self.config, {}, self.test_user_item, {})'.\
+                format(training_data, social_info)
+
+            algorithum = eval(recommender)
+            algorithum.accountDAO = self.accountDAO
+            algorithum.evaluation_conf = self.evaluation
+            algorithum.get_test_map()
+            algorithum.get_test_sample_data(max_sample=1000)
+
+            algorithum.execute()
 
         else:
             if self.config.contains('social'):
-                recommender = self.config['recommender']+'(self.config,self.trainingData,self.testData,self.relation)'
+                recommender = self.config['recommender'] + '(self.config,self.trainingData,self.testData,self.relation)'
             else:
                 recommender = self.config['recommender'] + '(self.config,self.trainingData,self.testData)'
             eval(recommender).execute()
 
 
-def run(measure,algor,order):
+def run(measure, algor, order):
     measure[order] = algor.execute()

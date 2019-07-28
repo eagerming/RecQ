@@ -1,6 +1,8 @@
 import os.path
 from os import makedirs,remove
 from re import compile,findall,split
+from time import strftime, localtime, time
+
 from .config import LineConfig
 class FileIO(object):
     def __init__(self):
@@ -16,10 +18,11 @@ class FileIO(object):
     #         f.write(str(content))
 
     @staticmethod
-    def writeFile(dir,file,content,op = 'w'):
+    def writeFile(dir,file,content,op = 'a'):
         if not os.path.exists(dir):
             os.makedirs(dir)
         with open(dir+file,op) as f:
+            f.writelines('\n------------------{}-------------------\n'.format(strftime("%H-%M-%S", localtime(time()))))
             f.writelines(content)
 
     @staticmethod

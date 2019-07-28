@@ -117,14 +117,14 @@ class NeuMF(DeepRecommender):
             print('iteration:', epoch, 'loss:', loss)
 
         print('pretraining... (MLP)')
-        for epoch in range(self.maxIter/2):
+        for epoch in range(self.maxIter//2):
             user_idx, item_idx, r = self.next_batch()
             _, loss, y_mlp = self.sess.run([self.mlp_optimizer, self.mlp_loss, self.y_mlp],
                                           feed_dict={self.u_idx: user_idx, self.i_idx: item_idx, self.r: r})
             print('iteration:', epoch, 'loss:', loss)
 
         print('training... (NeuMF)')
-        for epoch in range(self.maxIter/10):
+        for epoch in range(self.maxIter//10):
             user_idx, item_idx, r = self.next_batch()
             _, loss, y_neu = self.sess.run([self.neu_optimizer, self.neu_loss, self.y_neu],
                                           feed_dict={self.u_idx: user_idx, self.i_idx: item_idx, self.r: r})

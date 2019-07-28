@@ -33,8 +33,8 @@ class IterativeRecommender(Recommender):
         print('='*80)
 
     def initModel(self):
-        self.P = np.random.rand(len(self.data.user), self.k)/3 # latent user matrix
-        self.Q = np.random.rand(len(self.data.item), self.k)/3  # latent item matrix
+        self.P = np.random.rand(len(self.data.user), self.k)/len(self.data.user) # latent user matrix
+        self.Q = np.random.rand(len(self.data.item), self.k)/len(self.data.item) # latent item matrix
         self.loss, self.lastLoss = 0, 0
 
 
@@ -97,7 +97,8 @@ class IterativeRecommender(Recommender):
         if self.ranking.isMainOn():
             print('%s %s iteration %d: loss = %.4f, delta_loss = %.5f learning_Rate = %.5f' \
                   %(self.algorName,self.foldInfo,iter,self.loss,deltaLoss,self.lRate))
-            measure = self.ranking_performance()
+            # measure = self.ranking_performance()
+            self.evalRanking(write_to_file=True)
         else:
             measure = self.rating_performance()
             print('%s %s iteration %d: loss = %.4f, delta_loss = %.5f learning_Rate = %.5f %5s %5s' \

@@ -40,6 +40,7 @@ if __name__ == '__main__':
     conf = -1
     # order = input('please enter the num of the algorithm to run it:')
     order = 's5'
+    order = '9'
     import time
     s = time.time()
     if order == '0':

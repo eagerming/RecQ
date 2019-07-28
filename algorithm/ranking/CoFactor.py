@@ -59,8 +59,8 @@ class CoFactor(IterativeRecommender):
         maxVal = 0
         frequency = {}
         for item1 in occurrence:
-            frequency[item1] = sum(occurrence[item1].values()) * 1.0
-        D = sum(frequency.values()) * 1.0
+            frequency[item1] = sum(list(occurrence[item1].values())) * 1.0
+        D = sum(list(frequency.values())) * 1.0
         # maxx = -1
         for item1 in occurrence:
             for item2 in occurrence[item1]:
