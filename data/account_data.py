@@ -5,6 +5,8 @@ from collections import defaultdict
 from itertools import permutations
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
+
 
 class AccountDAO(object):
     def __init__(self, conf):
@@ -16,14 +18,14 @@ class AccountDAO(object):
         if os.path.exists(pickle_data_path):
             print('pickle load data')
             dataset = pickle.load(open(pickle_data_path, 'rb'))
-            self.training_user_item, self.training_account_item, self.relation, self.test_user_item, self.test_table, self.ground_visit, self.map_from_user_to_account = dataset
+            self.training_user_item, self.training_account_item, self.relation, self.test_user_item, self.test_table, self.ground_visit, self.map_from_user_to_account, self.SI, self.SB = dataset
         else:
             print('dataset is loading from scratch...')
-            self.training_user_item, self.training_account_item, self.relation = load_account_assignment_data(conf)
+            self.training_user_item, self.training_account_item, self.relation, self.SI, self.SB = load_account_assignment_data(conf)
             self.test_user_item = load_certain_new_user_item(conf)
             self.test_table = load_new_table(conf)
             self.ground_visit, self.map_from_user_to_account = load_ground_truth_history(conf)
-            dataset = (self.training_user_item, self.training_account_item, self.relation, self.test_user_item, self.test_table, self.ground_visit, self.map_from_user_to_account)
+            dataset = (self.training_user_item, self.training_account_item, self.relation, self.test_user_item, self.test_table, self.ground_visit, self.map_from_user_to_account, self.SI, self.SB)
             print('dataset is loaded, pickle dumping...')
             pickle.dump(dataset, open(pickle_data_path, 'wb'))
             print('pickle dump done!')
@@ -66,13 +68,20 @@ def load_account_assignment_data(conf):
     training_user_item = []
     training_account_item = []
     relation = []
+    SI = {}
+    SB = {}
 
-    for ind, row in train_table.iterrows():
+
+    for ind, row in tqdm(train_table.iterrows(), desc='loading training data...', total=len(train_table)):
         user = row.user_id
         account = row.account_id
+        SI[user] = row.SI
+        SB[user] = row.SB
+
         for item in row.item_id_list:
-            training_user_item.append([user, item, 1])
-            training_account_item.append([account, item, 1])
+                training_user_item.append([user, item, 1])
+                training_account_item.append([account, item, 1])
+
 
     account_user_map = train_table.groupby('account_id')['user_id'].aggregate(list)
     for users in account_user_map:
@@ -80,7 +89,7 @@ def load_account_assignment_data(conf):
         relation += pairs
 
     relations = list(map(lambda pair: [*pair,1], relation))
-    return training_user_item, training_account_item, relations
+    return training_user_item, training_account_item, relations, SI, SB
 
 
 
@@ -119,7 +128,7 @@ def load_ground_truth_history(conf):
     map_from_user_to_account = {u: a for a, users in account_user.to_dict().items() for u in users}
 
     ground_visit = defaultdict(dict)
-    for ind, row in ground_table[['user_id', 'item_id_list']].iterrows():
+    for ind, row in tqdm(ground_table[['user_id', 'item_id_list']].iterrows(), desc='loading ground truth', total=len(ground_table)):
         ground_user = row['user_id']
         items = eval(row['item_id_list'])
 

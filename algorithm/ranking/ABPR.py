@@ -12,6 +12,7 @@ from collections import defaultdict
 
 class ABPR(SocialRecommender):
     def __init__(self, conf, training_data, test_user_item, relation=[], fold='[1]'):
+        # relation=[]
         super(ABPR, self).__init__(conf, training_data, test_user_item, relation, fold)
 
     def buildModel(self):
@@ -38,16 +39,17 @@ class ABPR(SocialRecommender):
                                     self.FPSet[user][item] = 1
                                 else:
                                     self.FPSet[user][item] += 1
-        Suk = 10
+        Suk = 0
         print('Training...')
         iteration = 0
-        self.isConverged(iteration)
+        # self.isConverged(iteration)
         while iteration < self.maxIter:
             self.loss = 0
             itemList = list(self.data.item.keys())
-            for user in tqdm(self.PositiveSet, desc="training processing...", total=len(self.PositiveSet), postfix='epoch [()]'.format(iteration)):
+            for user in tqdm(self.PositiveSet, desc="training processing...", total=len(self.PositiveSet), postfix='epoch [{}]'.format(iteration)):
                 u = self.data.user[user]
                 kItems = list(self.FPSet[user].keys())
+                # Suk = self.accountDAO.SI[user] / np.sqrt(self.accountDAO.SB[user])
                 for item in self.PositiveSet[user]:
                     i = self.data.item[item]
                     for n in range(3):  # negative sampling for 3 times

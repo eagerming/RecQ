@@ -33,12 +33,17 @@ class RecQMultiAlgo(object):
 
     def execute_all(self, debug=False):
 
+
         if debug:
             for name, config in self.config_dict.items():
-                self.execute(config)
-        else:
-            pool = Pool(cpu_count())
+                print(config)
+                p = Process(target=self.execute, args=(config,))
+                p.start()
+                p.join()
 
+
+        else:
+            pool = Pool(3)
             for name, config in self.config_dict.items():
                 pool.apply_async(self.execute, args=(config,))
 

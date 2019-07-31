@@ -39,7 +39,7 @@ class FileIO(object):
             print('loading training data...')
         else:
             print('loading test data...')
-        with open(file) as f:
+        with open(file,errors='ignore') as f:
             ratings = f.readlines()
         # ignore the headline
         if ratingConfig.contains('-header'):
@@ -47,6 +47,15 @@ class FileIO(object):
         # order of the columns
         order = ratingConfig['-columns'].strip().split()
         delim = ' |,|\t'
+
+        # temp = ''
+        # for line in ratings:
+        #     eles = line.strip('\n').split(';')
+        #     eles = ','.join([e.strip('"') for e in eles])
+        #     temp += eles + '\n'
+        # with open('/Users/chongming/Downloads/bookdata.txt','w') as f:
+        #     f.write(temp)
+
         if ratingConfig.contains('-delim'):
             delim=ratingConfig['-delim']
         for lineNo, line in enumerate(ratings):
@@ -55,15 +64,16 @@ class FileIO(object):
                 print('The rating file is not in a correct format. Error: Line num %d' % lineNo)
                 exit(-1)
             try:
-                userId = items[int(order[0])]
-                itemId = items[int(order[1])]
+                userId = items[int(order[0])].strip()
+                itemId = items[int(order[1])].strip()
                 if len(order)<3:
                     rating = 1 #default value
                 else:
-                    rating  = items[int(order[2])]
+                    rating  = items[int(order[2])].strip()
                 if binarized:
                     if float(items[int(order[2])])<threshold:
-                        continue
+                        # continue
+                        rating = 1
                     else:
                         rating = 1
             except ValueError:
