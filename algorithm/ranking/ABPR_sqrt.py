@@ -10,10 +10,10 @@ from random import choice
 from collections import defaultdict
 
 
-class ABPR(SocialRecommender):
+class ABPR_sqrt(SocialRecommender):
     def __init__(self, conf, training_data, test_user_item, relation=[], fold='[1]', C=3, N=0):
         # relation=[]
-        super(ABPR, self).__init__(conf, training_data, test_user_item, relation, fold)
+        super(ABPR_sqrt, self).__init__(conf, training_data, test_user_item, relation, fold)
         self.C = C
         self.N = N
 

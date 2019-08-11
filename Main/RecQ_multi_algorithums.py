@@ -9,12 +9,16 @@ from time import strftime, localtime, time
 
 
 class RecQMultiAlgo(object):
-    def __init__(self, config_dict, config_account, account_DAO):
+    def __init__(self, config_dict, config_account, account_DAO, C=3, K=1, L=-1, N=0):
         self.trainingData = []  # training data
         self.testData = []  # testData
         self.relation = []
         self.measure = []
         self.config_dict = config_dict
+        self.C = C
+        self.K=K
+        self.L=L
+        self.N=N
 
         self.accountDAO = account_DAO
 
@@ -43,7 +47,7 @@ class RecQMultiAlgo(object):
 
 
         else:
-            pool = Pool(3)
+            pool = Pool(2)
             for name, config in self.config_dict.items():
                 pool.apply_async(self.execute, args=(config,))
 
@@ -66,13 +70,18 @@ class RecQMultiAlgo(object):
             training_data = 'self.training_account_item'
             social_info = ''
 
-        recommender = config['recommender'] + '(config, {}, self.test_user_item, {})'.\
-            format(training_data, social_info)
+
+        if config['recommender'].startswith('ABPR'):
+            recommender = config['recommender'] + '(config, {}, self.test_user_item, {}, C={}, N={})'. \
+                format(training_data, social_info, self.C, self.N)
+        else:
+            recommender = config['recommender'] + '(config, {}, self.test_user_item, {})'.\
+                format(training_data, social_info)
 
         algorithum = eval(recommender)
         algorithum.accountDAO = self.accountDAO
         algorithum.evaluation_conf = algo_evaluation
-        algorithum.get_test_map()
+        algorithum.get_test_map(K=self.K, L=self.L)
         algorithum.get_test_sample_data(max_sample=max_sample)
 
         algorithum.execute()

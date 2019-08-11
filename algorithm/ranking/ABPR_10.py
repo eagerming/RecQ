@@ -10,10 +10,10 @@ from random import choice
 from collections import defaultdict
 
 
-class ABPR(SocialRecommender):
+class ABPR_10(SocialRecommender):
     def __init__(self, conf, training_data, test_user_item, relation=[], fold='[1]', C=3, N=0):
         # relation=[]
-        super(ABPR, self).__init__(conf, training_data, test_user_item, relation, fold)
+        super(ABPR_10, self).__init__(conf, training_data, test_user_item, relation, fold)
         self.C = C
         self.N = N
 
@@ -41,7 +41,7 @@ class ABPR(SocialRecommender):
                                     self.FPSet[user][item] = 1
                                 else:
                                     self.FPSet[user][item] += 1
-        Suk = 0
+        Suk = 10
         print('Training...')
         iteration = 0
         # self.isConverged(iteration)
@@ -51,7 +51,7 @@ class ABPR(SocialRecommender):
             for user in tqdm(self.PositiveSet, desc="training processing...", total=len(self.PositiveSet), postfix='epoch [{}]'.format(iteration)):
                 u = self.data.user[user]
                 kItems = list(self.FPSet[user].keys())
-                Suk = self.accountDAO.SI[user] / np.sqrt(self.accountDAO.SB[user])
+                # Suk = self.accountDAO.SI[user] / np.sqrt(self.accountDAO.SB[user])
                 for item in self.PositiveSet[user]:
                     i = self.data.item[item]
                     for n in range(self.C):  # negative sampling for 3 times

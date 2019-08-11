@@ -10,11 +10,10 @@ from random import choice
 from collections import defaultdict
 
 
-class ABPR(SocialRecommender):
-    def __init__(self, conf, training_data, test_user_item, relation=[], fold='[1]', C=3, N=0):
+class ABPR_t1(SocialRecommender):
+    def __init__(self, conf, training_data, test_user_item, relation=[], fold='[1]',C=1,N=0):
         # relation=[]
-        super(ABPR, self).__init__(conf, training_data, test_user_item, relation, fold)
-        self.C = C
+        super(ABPR_t1, self).__init__(conf, training_data, test_user_item, relation, fold)
         self.N = N
 
     def buildModel(self):
@@ -54,7 +53,7 @@ class ABPR(SocialRecommender):
                 Suk = self.accountDAO.SI[user] / np.sqrt(self.accountDAO.SB[user])
                 for item in self.PositiveSet[user]:
                     i = self.data.item[item]
-                    for n in range(self.C):  # negative sampling for 3 times
+                    for n in range(1):  # negative sampling for 3 times
                         if len(self.FPSet[user]) > 0:
                         # if False:
                             item_k = choice(kItems)

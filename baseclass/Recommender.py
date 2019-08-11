@@ -59,7 +59,7 @@ class Recommender(object):
 
         self.num_users, self.num_items, self.train_size = self.data.trainingSize()
 
-    def get_test_sample_data(self, max_sample = 1000):
+    def get_test_sample_data(self, max_sample=1000):
 
         testSample = {}
         keys = list(self.data.testSet_u.keys())
@@ -75,12 +75,13 @@ class Recommender(object):
 
         self.testSample = testSample
 
-
-    def get_test_map(self):
+    def get_test_map(self, K=1, L=-1):
+        self.K = K
+        self.L = L
         if not hasattr(self, 'accountDAO') or self.accountDAO is None:
             self.map_from_true_to_identify = {i: i for i in list(self.data.testSet_u.keys())}
         elif self.evaluation_conf.contains('-ul') and eval(self.evaluation_conf['-ul']) > 0:
-            self.map_from_true_to_identify = self.get_map_from_true_to_identify()
+            self.map_from_true_to_identify = self.get_map_from_true_to_identify(k=K, index=L)
         else:
             self.map_from_true_to_identify = self.accountDAO.map_from_user_to_account
 
@@ -166,14 +167,32 @@ class Recommender(object):
         map_from_true_to_identify = {}
         table = self.accountDAO.test_table[self.accountDAO.test_table.k == k]
 
-        identification_result = dict(zip(table['truth_user'].to_list(), table['identify_user'].to_list()))
+        reserve_list = [ind for ind, users in enumerate(table['identify_user']) if len(users)]
+        table = table.iloc[reserve_list].copy()
 
-        for key, value in identification_result.items():
-            if len(value) >= index + 1:
-                map_from_true_to_identify[key] = value[index]
+        table['identify_user_index'] = [i_list[index] if len(i_list) and len(i_list) >= index + 1 else None for
+                                        i_list in table['identify_user']]
+        # table['identify_user_index'].astype(int)
+        # table.groupby
+
+        identify_list = table.groupby('truth_user')['identify_user_index'].aggregate(list)
+
+        for truth, idens in identify_list.items():
+            i_users, counts = np.unique(np.array(idens)[np.array(idens) > 0], return_counts=True)
+            if len(i_users) == 0:
+                continue
+            map_from_true_to_identify[truth] = i_users[np.argmax(counts)]
+
+        # identification_result = dict(zip(table['truth_user'].to_list(), table['identify_user'].to_list()))
+        # for key, value in identification_result.items():
+        #     if len(value) and len(value) >= index + 1:
+        #         try:
+        #             map_from_true_to_identify[key] = value[index]
+        #         except:
+        #             print(key, value)
+        #             map_from_true_to_identify[key] = value[index]
 
         return map_from_true_to_identify
-
 
     def get_recommendation(self, data_user, N):
         user, identified_user, testSample_user = data_user
@@ -245,8 +264,6 @@ class Recommender(object):
 
         return user, line, recList_user
 
-
-
     def evalRanking(self, write_to_file=True, use_now_time=False):
         res = []  # used to contain the text of the result
 
@@ -287,33 +304,59 @@ class Recommender(object):
         # pool.close()
         # pool.join()
 
+        testSample_copy = testSample.copy()
+
         for i, user in tqdm(enumerate(testSample), total=len(testSample), desc='Measuring [{}]'.format(self.algorName)):
             identified_user = self.map_from_true_to_identify.get(user, -1)
             if identified_user == -1:
+                del testSample_copy[user]
                 continue
             user, line, recList_user = self.get_recommendation((user, identified_user, testSample[user]), N)
 
             recList[user] = recList_user
             res.append(line)
 
-        self.measure = Measure.rankingMeasure(testSample, recList, top)
+        self.measure = Measure.rankingMeasure(testSample_copy, recList, top)
+        try:
+            self.measure.append("C:{}\n".format(self.C))
+        except:
+            pass
+        try:
+            self.measure.append("L:{}\n".format(self.L))
+        except:
+            pass
+        try:
+            self.measure.append("K:{}\n".format(self.K))
+        except:
+            pass
+        try:
+            self.measure.append("N:{}\n".format(self.N))
+        except:
+            pass
+
+
         if use_now_time:
             currentTime = strftime("%Y-%m-%d %H-%M-%S", localtime(time()))
         else:
             currentTime = self.currentTime
         if write_to_file:
             # output prediction result
-            if self.isOutput:
+            if False and self.isOutput:
                 fileName = ''
                 outDir = self.output['-dir']
                 fileName = self.config['recommender'] + '@' + currentTime + '-top-' + str(
                     N) + 'items' + self.foldInfo + '.txt'
                 FileIO.writeFile(outDir, fileName, res)
-                print('The result has been output to ', abspath(outDir), '.')
             # output evaluation result
             outDir = self.output['-dir']
-            fileName = self.config['recommender'] + '@' + currentTime + '-measure' + self.foldInfo + '.txt'
+            try:
+                fileName = self.config['recommender'] + '@' + currentTime + '-measure' + self.foldInfo + '_C{}'.format(self.C) + '.txt'
+            except:
+                fileName = self.config['recommender'] + '@' + currentTime + '-measure' + self.foldInfo + '.txt'
             FileIO.writeFile(outDir, fileName, self.measure)
+            # FileIO.writeFile(outDir, fileName, "C:{}".format(self.C))
+
+            print('The result has been output to ', abspath(outDir), '.')
         print('The result of %s %s:\n%s' % (self.algorName, self.foldInfo, ''.join(self.measure)))
 
     def execute(self):

@@ -52,8 +52,8 @@ class DMF(DeepRecommender):
         self.negative_sp = 5
         self.n_hidden_u=[256,512]
         self.n_hidden_i=[256,512]
-        self.input_u = tf.placeholder(tf.float, [None, n_input_u])
-        self.input_i = tf.placeholder(tf.float, [None, n_input_i])
+        self.input_u = tf.placeholder(tf.float32, [None, n_input_u])
+        self.input_i = tf.placeholder(tf.float32, [None, n_input_i])
 
 
     def buildModel(self):
@@ -61,7 +61,7 @@ class DMF(DeepRecommender):
 
         initializer = tf.contrib.layers.xavier_initializer()
         #user net
-        user_W1 = tf.Variable(initializer([self.num_items, self.n_hidden_u[0]],stddev=0.01))
+        user_W1 = tf.Variable(initializer([self.num_items, self.n_hidden_u[0]], stddev=0.01))
         self.user_out = tf.nn.relu(tf.matmul(self.input_u, user_W1))
         self.regLoss = tf.nn.l2_loss(user_W1)
         for i in range(1, len(self.n_hidden_u)):

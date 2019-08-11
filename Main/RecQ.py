@@ -18,7 +18,7 @@ class RecQ(object):
         self.config = config
         self.ratingConfig = LineConfig(config['ratings.setup'])
 
-        self.accountDAO = account_DAO
+        # self.accountDAO = account_DAO
         # self.currentTime = strftime("%Y-%m-%d %H-%M-%S", localtime(time()))
 
         if self.config.contains('evaluation.setup'):
