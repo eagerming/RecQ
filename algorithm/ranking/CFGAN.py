@@ -58,7 +58,7 @@ class CFGAN(DeepRecommender):
 
         with tf.variable_scope("Generator"):
             # Generator Net
-            self.C = tf.placeholder(tf.float32, shape=[None, self.num_items], name='C')
+            self.CC = tf.placeholder(tf.float32, shape=[None, self.num_items], name='C')
 
             G_W1 = tf.get_variable(name='G_W1',initializer=xavier_init([self.num_items,self.num_items]), regularizer=G_regularizer)
             G_b1 = tf.get_variable(name='G_b1',initializer=tf.zeros(shape=[self.num_items]), regularizer=G_regularizer)
@@ -93,7 +93,7 @@ class CFGAN(DeepRecommender):
 
         #inference
         def generator():
-            r_hat = tf.nn.sigmoid(tf.matmul(self.C, G_W1) + G_b1)
+            r_hat = tf.nn.sigmoid(tf.matmul(self.CC, G_W1) + G_b1)
             # G_h2 = tf.nn.relu(tf.matmul(G_h1, G_W2) + G_b2)
             # r_hat = tf.nn.sigmoid(tf.matmul(G_h2, G_W3) + G_b3)
             fake_data = tf.multiply(r_hat,self.mask)
@@ -106,15 +106,15 @@ class CFGAN(DeepRecommender):
             return  D_output
 
         def r_hat():
-            r_hat = tf.nn.sigmoid(tf.matmul(self.C, G_W1) + G_b1)
+            r_hat = tf.nn.sigmoid(tf.matmul(self.CC, G_W1) + G_b1)
             # G_h2 = tf.nn.relu(tf.matmul(G_h1, G_W2) + G_b2)
             # r_hat = tf.nn.sigmoid(tf.matmul(G_h2, G_W3) + G_b3)
             return r_hat
 
         G_sample = generator()
         self.r_hat = r_hat()
-        D_real = discriminator(tf.concat([self.C,self.C],1))
-        D_fake = discriminator(tf.concat([G_sample,self.C],1))
+        D_real = discriminator(tf.concat([self.CC, self.CC], 1))
+        D_fake = discriminator(tf.concat([G_sample, self.CC], 1))
 
 
         self.D_loss = -tf.reduce_mean(tf.log(D_real+10e-5) + tf.log(1. - D_fake+10e-5))
@@ -139,10 +139,10 @@ class CFGAN(DeepRecommender):
             G_loss = 0
 
             C_u, mask, N_zr = self.next_batch()
-            _, D_loss = self.sess.run([self.D_solver, self.D_loss], feed_dict={self.C: C_u,self.mask:mask,self.N_zr:N_zr})
+            _, D_loss = self.sess.run([self.D_solver, self.D_loss], feed_dict={self.CC: C_u, self.mask:mask, self.N_zr:N_zr})
 
             for i in range(3):
-                _, G_loss = self.sess.run([self.G_solver, self.G_loss], feed_dict={self.C: C_u,self.mask:mask,self.N_zr:N_zr})
+                _, G_loss = self.sess.run([self.G_solver, self.G_loss], feed_dict={self.CC: C_u, self.mask:mask, self.N_zr:N_zr})
 
             #C_u, mask, N_u = self.next_batch()
             print('iteration:', epoch, 'D_loss:', D_loss, 'G_loss', G_loss)
@@ -153,7 +153,7 @@ class CFGAN(DeepRecommender):
         'invoked to rank all the items for the user'
         if self.data.containsUser(u):
             vec = self.data.row(u).reshape(1,self.num_items)
-            res = self.sess.run([self.r_hat], feed_dict={self.C: vec})[0]
+            res = self.sess.run([self.r_hat], feed_dict={self.CC: vec})[0]
             #print res[0]
             return res[0]
 

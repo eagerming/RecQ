@@ -47,7 +47,7 @@ class RecQMultiAlgo(object):
 
 
         else:
-            pool = Pool(2)
+            pool = Pool(5)
             for name, config in self.config_dict.items():
                 pool.apply_async(self.execute, args=(config,))
 

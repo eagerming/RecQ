@@ -45,6 +45,7 @@ def parse_args(arg=None, namespace=None, parse_known_args=False):
 
 def walk_dir(path):
     for fpathe, dirs, fs in os.walk(path):  # os.walk是获取所有的目录
+        dirs.sort()
         return dirs
 
 
@@ -79,9 +80,10 @@ def run_differ_C(args):
 
 
 def run_differ_L(args):
-    algorithm_list = ['ABPR', 'ABPR_10', 'ABPR_d', 'ABPR_sqrt', 'ABPR_t1', 'BPR', 'WRMF', 'ExpoMF', 'CoFactor',
-                      'NeuMF', 'APR', 'CDAE', 'CFGAN']
-    # algorithm_list = ['ABPR', 'ABPR_10', 'ABPR_d', 'ABPR_sqrt', 'ABPR_t1']
+    # algorithm_list = ['ABPR', 'ABPR_10', 'ABPR_d', 'ABPR_sqrt', 'ABPR_t1', 'BPR', 'WRMF', 'ExpoMF', 'CoFactor',
+    #                   'NeuMF', 'APR', 'CDAE', 'CFGAN']
+    # algorithm_list = ['NeuMF', 'APR', 'CDAE', 'CFGAN']
+    algorithm_list = ['ABPR', 'ABPR_10', 'ABPR_d', 'ABPR_sqrt', 'ABPR_t1']
 
     config_dict = {name: Config(os.path.join(relative_path_root, 'config', name + '.conf')) for name in algorithm_list}
 
@@ -90,7 +92,7 @@ def run_differ_L(args):
 
     conf_account = Config(conf_path)
     conf_account['output.setup'] = os.path.join(os.path.dirname(os.path.dirname(conf_account['output.setup'])),
-                                                'varies_LA/')
+                                                'varies_L/')
 
     account_data = AccountDAO(conf_account)
 
@@ -107,9 +109,10 @@ def run_differ_L(args):
 
 
 def run_differ_K(args):
-    algorithm_list = ['ABPR', 'ABPR_10', 'ABPR_d', 'ABPR_sqrt', 'ABPR_t1', 'BPR', 'WRMF', 'ExpoMF', 'CoFactor',
-                      'NeuMF', 'APR', 'CDAE', 'CFGAN']
-    # algorithm_list = ['ABPR', 'ABPR_10', 'ABPR_d', 'ABPR_sqrt', 'ABPR_t1']
+    # algorithm_list = ['ABPR', 'ABPR_10', 'ABPR_d', 'ABPR_sqrt', 'ABPR_t1', 'BPR', 'WRMF', 'ExpoMF', 'CoFactor',
+    #                   'NeuMF', 'APR', 'CDAE', 'CFGAN']
+    # algorithm_list = ['NeuMF', 'APR', 'CDAE', 'CFGAN']
+    algorithm_list = ['ABPR', 'ABPR_10', 'ABPR_d', 'ABPR_sqrt', 'ABPR_t1']
 
     config_dict = {name: Config(os.path.join(relative_path_root, 'config', name + '.conf')) for name in algorithm_list}
 
@@ -118,7 +121,7 @@ def run_differ_K(args):
 
     conf_account = Config(conf_path)
     conf_account['output.setup'] = os.path.join(os.path.dirname(os.path.dirname(conf_account['output.setup'])),
-                                                'varies_KA/')
+                                                'varies_K/')
 
     account_data = AccountDAO(conf_account)
 
@@ -150,7 +153,11 @@ def run_differ_N(args):
     conf_account['output.setup'] = os.path.join(os.path.dirname(os.path.dirname(conf_account['output.setup'])),
                                                 'varies_N/')
 
+    if args.dataset == 'movie':
+        conf_account['account.algorithm'] = 'PDAN'
+
     for dir in dirs:
+        print("dir is {}".format(dir))
         conf_account['account.data'] = os.path.join(os.path.dirname(conf_account['account.data']), dir)
         # conf_account['output.setup'] = os.path.join(conf_account['output.setup'], dir)
 
@@ -170,7 +177,7 @@ def run_differ_N(args):
 
 if __name__ == '__main__':
     args, _ = parse_args(parse_known_args=True)
-    args.debug = True
+    # args.debug = True
     if args.Param == 'C':
         run_differ_C(args)
     elif args.Param == 'L':
